@@ -88,3 +88,17 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny",
     ],
 }
+
+if os.environ.get("AUTO_CREATE_SUPERUSER") == "1":
+    try:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        if not User.objects.filter(username="admin").exists():
+            User.objects.create_superuser(
+                username="admin",
+                email="admin@onelight.com",
+                password=os.environ.get("ADMIN_PASSWORD", "admin1234")
+            )
+    except Exception as e:
+        print("Superuser auto-create failed:", e)
