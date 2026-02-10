@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Host Dashboard</title>
+  <style>
+    body{font-family:system-ui;margin:0;padding:24px;background:#0b0b0f;color:#fff}
+    .wrap{max-width:980px;margin:0 auto}
+    .top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+    input,button{padding:12px 14px;border-radius:12px;border:0;font-size:16px}
+    input{background:#1f1f2c;color:#fff;min-width:220px}
+    button{background:#c714c7;color:#fff;font-weight:900;cursor:pointer}
+    .btn2{background:#2a2a3a}
+    .pill{background:#1f1f2c;border-radius:999px;padding:8px 12px;font-weight:900}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+    .panel{background:#141420;border-radius:18px;padding:16px}
+    .title{font-weight:900;margin-bottom:10px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;font-size:14px}
+    th{opacity:.7}
+    .muted{opacity:.7;font-size:13px;margin-top:10px;line-height:1.4}
+    form{display:inline}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2 style="margin:0 0 10px 0;">진행자 대시보드</h2>
+
+    <div class="top">
+      <input id="code" placeholder="이벤트 코드 (예: ONELIGHT)" value="{{ code|default:'' }}">
+      <button id="load">불러오기</button>
+
+      <span class="pill">참가자: <span id="pcount">-</span></span>
+      <span class="pill">시그널: <span id="scount">-</span></span>
+      <span class="pill">커플: <span id="mcount">-</span></span>
+      <span class="pill">상태: <span id="status">-</span></span>
+      <span class="pill">메시지: <span id="msgopen">-</span></span>
+    </div>
+
+    <div class="top">
+      <form method="post" action="/host/toggle-status/">
+        {% csrf_token %}
+        <input type="hidden" name="code" value="{{ code|default:'' }}" id="codeHidden1">
+        <button class="btn2" type="submit">OPEN/CLOSED 토글</button>
+      </form>
+      <form method="post" action="/host/toggle-message/">
+        {% csrf_token %}
+        <input type="hidden" name="code" value="{{ code|default:'' }}" id="codeHidden2">
+        <button class="btn2" type="submit">메시지 ON/OFF 토글</button>
+      </form>
+      <div class="muted">※ admin 로그인(staff) 상태에서만 접근 가능</div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="title">남자</div>
+        <table>
+          <thead><tr><th>닉네임</th><th>받은호감</th><th>보낸호감</th></tr></thead>
+          <tbody id="maleBody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="title">여자</div>
+        <table>
+          <thead><tr><th>닉네임</th><th>받은호감</th><th>보낸호감</th></tr></thead>
+          <tbody id="femaleBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="muted">3초마다 자동 갱신 + 커플 수는 WebSocket으로도 즉시 업데이트됩니다.</div>
+  </div>
+
+<script>
+let timer = null;
+let eventId = null;
+let ws = null;
+
+function rowHtml(p){
+  return `<tr><td>${p.nickname}</td><td>${p.received_count}</td><td>${p.sent_count}</td></tr>`;
+}
+
+async function fetchSnapshot(){
+  const code = document.getElementById("code").value.trim();
+  document.getElementById("codeHidden1").value = code;
+  document.getElementById("codeHidden2").value = code;
+  if(!code) return;
+
+  const res = await fetch(`/host/api/snapshot/?code=${encodeURIComponent(code)}`);
+  const data = await res.json().catch(()=> ({}));
+  if(!res.ok){
+    alert(data.error || "불러오기 실패");
+    return;
+  }
+
+  eventId = data.event.id;
+  document.getElementById("pcount").innerText = data.stats.participants;
+  document.getElementById("scount").innerText = data.stats.signals;
+  document.getElementById("mcount").innerText = data.stats.matches;
+  document.getElementById("status").innerText = data.event.status;
+  document.getElementById("msgopen").innerText = data.event.message_open ? "OPEN" : "CLOSED";
+
+  const maleBody = document.getElementById("maleBody");
+  const femaleBody = document.getElementById("femaleBody");
+  maleBody.innerHTML = (data.males || []).map(rowHtml).join("") || `<tr><td colspan="3">-</td></tr>`;
+  femaleBody.innerHTML = (data.females || []).map(rowHtml).join("") || `<tr><td colspan="3">-</td></tr>`;
+
+  // WS connect once
+  if(!ws && eventId){
+    const wsProto = location.protocol === "https:" ? "wss" : "ws";
+    ws = new WebSocket(`${wsProto}://${location.host}/ws/host/${eventId}/`);
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if(msg.type === "match_count_update"){
+        document.getElementById("mcount").innerText = msg.match_count;
+      }
+    };
+  }
+}
+
+function start(){
+  if(timer) clearInterval(timer);
+  fetchSnapshot();
+  timer = setInterval(fetchSnapshot, 3000);
+}
+
+document.getElementById("load").onclick = start;
+if(document.getElementById("code").value.trim()){
+  start();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>매칭 확인</title>
+  <style>
+    body{font-family:system-ui;margin:0;padding:24px;background:#0b0b0f;color:#fff}
+    .wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+    .card{background:#141420;border-radius:18px;padding:16px}
+    .title{font-weight:900;margin-bottom:6px}
+    .muted{opacity:.7;font-size:13px;line-height:1.4}
+    .big{font-size:22px;font-weight:900;margin-top:8px}
+    .nav{display:flex;gap:10px}
+    .nav button{flex:1;padding:14px;border-radius:14px;border:0;font-weight:900;background:#2a2a3a;color:#fff;cursor:pointer}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="title">매칭 확인</div>
+    <div id="state" class="muted">불러오는 중...</div>
+    <div id="partner" class="big"></div>
+  </div>
+
+  <div class="nav">
+    <button onclick="location.href='/lobby/'">로비</button>
+    <button onclick="location.href='/play/'">호감 보내기</button>
+  </div>
+</div>
+
+<script>
+async function loadMatch(){
+  // api/me/ 에 partner가 들어있도록 되어있음
+  const res = await fetch("/api/me/");
+  if(!res.ok){ location.href="/"; return; }
+  const me = await res.json();
+
+  const state = document.getElementById("state");
+  const partner = document.getElementById("partner");
+
+  if(me.partner){
+    state.innerText = "매칭 완료";
+    partner.innerText = `🎉 ${me.partner.nickname} 님`;
+  } else {
+    state.innerText = "아직 매칭된 상대가 없어요.";
+    partner.innerText = "";
+  }
+}
+loadMatch();
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lobby</title>
+  <style>
+    body{font-family:system-ui;margin:0;padding:24px;background:#0b0b0f;color:#fff}
+    .wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+    .card{background:#141420;border-radius:18px;padding:16px}
+    .title{font-weight:900;margin-bottom:6px}
+    .muted{opacity:.7;font-size:13px;line-height:1.4}
+    .row{display:flex;gap:10px}
+    .btn{
+      width:100%;padding:14px;border-radius:14px;border:0;font-weight:900;
+      background:#2a2a3a;color:#fff;cursor:pointer
+    }
+    .btnPrimary{background:#c714c7}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .pill{
+      display:inline-block;
+      background:#1f1f2c;
+      border-radius:999px;
+      padding:8px 12px;
+      font-weight:900;
+      margin-top:8px
+    }
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="title">로비</div>
+    <div id="me" class="muted">불러오는 중...</div>
+
+    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+      <div class="pill">❤️ 받은 호감: <span id="recv">0</span></div>
+      <div class="pill">보낸 시그널: <span id="sent">0</span>/2</div>
+
+      <!-- ✅ 메시지 기능 오픈 시에만 노출 -->
+      <div id="msgPill" class="pill hidden">
+        📩 받은 메시지: <span id="msgCount">0</span>개
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <button class="btn btnPrimary" onclick="location.href='/play/'">호감 보내기</button>
+    <button class="btn" onclick="location.href='/match/'">매칭 확인</button>
+  </div>
+
+  <!-- 2부 기능 버튼 -->
+  <button id="featureBtn" class="btn" disabled>확인 중...</button>
+
+  <button class="btn" onclick="logout()">나가기</button>
+</div>
+
+<form style="display:none;">{% csrf_token %}</form>
+
+<script>
+async function loadMe(){
+  const res = await fetch("/api/me/");
+  if(!res.ok){ location.href="/"; return; }
+  const d = await res.json();
+
+  document.getElementById("me").innerText = `${d.nickname} (${d.gender})`;
+  document.getElementById("recv").innerText = d.received_count ?? 0;
+  document.getElementById("sent").innerText = d.sent_count ?? 0;
+}
+
+async function loadMessageCount(){
+  const res = await fetch("/api/message-count/");
+  if(res.ok){
+    const d = await res.json();
+    document.getElementById("msgCount").innerText = d.count ?? 0;
+  }
+}
+
+async function loadEventState(){
+  const res = await fetch("/api/event-state/");
+  if(!res.ok) return {message_open:false};
+  return await res.json();
+}
+
+async function setupFeatureButton(){
+  const state = await loadEventState();
+  const btn = document.getElementById("featureBtn");
+  const msgPill = document.getElementById("msgPill");
+
+  if(!state.message_open){
+    // 1부
+    btn.innerText = "2부에는 추가기능이 오픈됩니다";
+    btn.disabled = true;
+    msgPill.classList.add("hidden");
+  } else {
+    // 2부
+    btn.innerText = "메세지 보내기";
+    btn.disabled = false;
+    btn.onclick = () => location.href="/message/";
+    msgPill.classList.remove("hidden");
+    await loadMessageCount();
+  }
+}
+
+async function logout(){
+  await fetch("/api/logout/", {method:"POST", credentials:"same-origin"});
+  location.href="/";
+}
+
+async function boot(){
+  await loadMe();
+  await setupFeatureButton();
+  setInterval(loadMe, 3000);
+}
+boot();
+</script>
+</body>
+</html>

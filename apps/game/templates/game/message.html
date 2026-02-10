@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>메시지</title>
+  <style>
+    body{font-family:system-ui;margin:0;padding:24px;background:#0b0b0f;color:#fff}
+    .wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+    .card{background:#141420;border-radius:18px;padding:16px}
+    .title{font-weight:900;margin-bottom:6px}
+    .muted{opacity:.7;font-size:13px;line-height:1.4}
+    .pill{display:inline-block;background:#1f1f2c;border-radius:999px;padding:8px 12px;font-weight:900;margin-top:8px}
+    .btn{
+      width:100%;padding:14px;border-radius:14px;border:0;font-weight:900;
+      background:#c714c7;color:#fff;cursor:pointer
+    }
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    select,textarea{
+      width:100%;margin-top:10px;background:#0b0b0f;color:#fff;
+      border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px;font-size:15px
+    }
+    textarea{min-height:96px}
+    .row{display:flex;gap:10px}
+    .row button{flex:1;background:#2a2a3a}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <div class="title">메시지</div>
+    <div id="desc" class="muted">불러오는 중...</div>
+
+    <div class="pill">📩 받은 메시지: <span id="msgCount">0</span>개</div>
+
+    <button id="actionBtn" class="btn" disabled>확인 중...</button>
+  </div>
+
+  <!-- 메시지 작성 영역 (오픈 후에만 표시) -->
+  <div id="composerCard" class="card hidden">
+    <div class="title">메세지 보내기</div>
+    <div class="muted">닉네임을 선택하고 200자 이내로 보내세요. (메시지 내용은 현재 관리자만 확인)</div>
+
+    <select id="toSelect">
+      <option value="">받는 사람 선택</option>
+    </select>
+
+    <textarea id="text" maxlength="200" placeholder="200자 이내"></textarea>
+    <div class="muted"><span id="count">0</span>/200</div>
+
+    <button id="sendBtn" class="btn">전송</button>
+  </div>
+
+  <div class="row">
+    <button class="btn" style="background:#2a2a3a" onclick="location.href='/match/'">매칭 확인</button>
+    <button class="btn" style="background:#2a2a3a" onclick="location.href='/lobby/'">로비</button>
+  </div>
+
+</div>
+
+<form style="display:none;">{% csrf_token %}</form>
+
+<script>
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+let me = null;
+let messageOpen = false;
+
+async function loadMe(){
+  const res = await fetch("/api/me/");
+  if(!res.ok){ location.href="/"; return; }
+  me = await res.json();
+}
+
+async function loadMessageCount(){
+  // 네 백엔드가 /api/message-count/ 같은 엔드포인트를 쓰면 거기에 맞춰 변경해줘야 함.
+  // 지금 프로젝트 기준: /api/messages/ 대신 "개수만" 엔드포인트를 따로 쓰는 구조가 필요.
+  // (이미 너가 말한 요구사항이라 분리했다고 가정)
+  const res = await fetch("/api/message-count/");
+  if(res.ok){
+    const d = await res.json();
+    document.getElementById("msgCount").innerText = d.count ?? 0;
+  }
+}
+
+async function loadEventState(){
+  const res = await fetch("/api/event-state/");
+  if(!res.ok){ return {message_open:false}; }
+  return await res.json();
+}
+
+async function loadCards(){
+  // 반대 성별 목록을 그대로 쓰되, 메시지는 매칭 여부와 무관하게 선택 가능하게 구성
+  const res = await fetch("/api/cards/");
+  if(!res.ok) return [];
+  const d = await res.json();
+  return d.cards || [];
+}
+
+function setPreOpenUI(){
+  document.getElementById("desc").innerText = "메시지 기능은 2부에서 오픈됩니다.";
+  const btn = document.getElementById("actionBtn");
+  btn.innerText = "2부에는 추가기능이 오픈됩니다";
+  btn.disabled = true;
+  document.getElementById("composerCard").classList.add("hidden");
+}
+
+async function setOpenUI(){
+  document.getElementById("desc").innerText = "2부 메시지 기능이 오픈되었습니다. (10분 / 1회 제한)";
+  const btn = document.getElementById("actionBtn");
+  btn.innerText = "메세지 보내기";
+  btn.disabled = false;
+  btn.onclick = () => {
+    document.getElementById("composerCard").classList.remove("hidden");
+    document.getElementById("composerCard").scrollIntoView({behavior:"smooth"});
+  };
+
+  const cards = await loadCards();
+  const sel = document.getElementById("toSelect");
+  sel.innerHTML = `<option value="">받는 사람 선택</option>`;
+  for(const c of cards){
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = c.nickname;
+    sel.appendChild(opt);
+  }
+}
+
+async function boot(){
+  await loadMe();
+  await loadMessageCount();
+
+  const state = await loadEventState();
+  messageOpen = !!state.message_open;
+
+  if(!messageOpen){
+    setPreOpenUI();
+  }else{
+    await setOpenUI();
+  }
+}
+
+document.getElementById("text").addEventListener("input", (e)=>{
+  document.getElementById("count").innerText = e.target.value.length;
+});
+
+document.getElementById("sendBtn").onclick = async ()=>{
+  if(!messageOpen){
+    alert("아직 2부 오픈 전입니다.");
+    return;
+  }
+
+  const to_id = document.getElementById("toSelect").value;
+  const text = document.getElementById("text").value.trim();
+
+  if(!to_id){ alert("받는 사람을 선택해줘"); return; }
+  if(!text){ alert("내용을 입력해줘"); return; }
+  if(text.length > 200){ alert("200자 이내로 작성해줘"); return; }
+
+  const csrftoken = getCookie("csrftoken");
+
+  const res = await fetch("/api/message/", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {"Content-Type":"application/json","X-CSRFToken": csrftoken},
+    body: JSON.stringify({to_id, text})
+  });
+
+  const data = await res.json().catch(()=> ({}));
+  if(!res.ok){
+    alert(data.error || "전송 실패");
+    return;
+  }
+
+  alert("전송 완료!");
+  document.getElementById("text").value = "";
+  document.getElementById("count").innerText = "0";
+};
+boot();
+</script>
+</body>
+</html>

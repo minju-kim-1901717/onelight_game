@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Play</title>
+  <style>
+    body{font-family:system-ui;margin:0;padding:24px;background:#0b0b0f;color:#fff}
+    .wrap{max-width:560px;margin:0 auto}
+    .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    .pill{background:#1f1f2c;border-radius:999px;padding:8px 12px;font-weight:900}
+    .sectionTitle{margin:14px 0 10px 0;font-weight:900;opacity:.9}
+    .list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .item{background:#141420;border-radius:14px;padding:14px 12px;cursor:pointer;display:flex;justify-content:center;align-items:center;font-weight:900;position:relative}
+    .item.sent{opacity:.35; cursor:not-allowed;}
+    .tag{position:absolute; right:10px; top:10px;font-size:11px;padding:4px 8px;border-radius:999px;background:#2a2a3a;}
+    .muted{opacity:.7;margin-top:10px;font-size:13px;line-height:1.4}
+
+    .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal{width:100%;max-width:420px;background:#141420;border-radius:18px;padding:18px}
+    .modal h3{margin:0 0 8px 0}
+    .modal .row{display:flex;gap:10px;margin-top:14px}
+    .btn{flex:1;padding:14px;border-radius:14px;border:0;font-weight:900}
+    .btn-cancel{background:#2a2a3a;color:#fff}
+    .btn-ok{background:#c714c7;color:#fff}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="pill">보낸 시그널: <span id="sent">0</span>/2</div>
+      <div class="pill">❤️ 받은 호감: <span id="recv">0</span></div>
+      <div class="pill" id="meinfo">...</div>
+    </div>
+
+    <div class="sectionTitle" id="sectionTitle">상대 닉네임</div>
+    <div id="list" class="list"></div>
+    <div class="muted">닉네임을 누르면 확인창이 뜨고, 확인하면 호감이 전송돼요.</div>
+  </div>
+
+  <div id="backdrop" class="backdrop">
+    <div class="modal">
+      <h3>호감 보내기</h3>
+      <div id="targetText" class="muted"></div>
+      <div class="row">
+        <button class="btn btn-cancel" id="btnCancel">취소</button>
+        <button class="btn btn-ok" id="btnOk">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <form style="display:none;">{% csrf_token %}</form>
+
+<script>
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+let selected = null;
+let me = null;
+
+function openModal(card){
+  if(card.sent){ alert("이미 보냄!"); return; }
+  selected = card;
+  document.getElementById("targetText").innerText = `"${card.nickname}" 님에게 호감을 보낼까요?`;
+  document.getElementById("backdrop").style.display = "flex";
+}
+function closeModal(){
+  selected = null;
+  document.getElementById("backdrop").style.display = "none";
+}
+
+async function refreshMe(){
+  const res = await fetch("/api/me/");
+  if(!res.ok){ location.href="/"; return null; }
+  me = await res.json();
+  document.getElementById("sent").innerText = me.sent_count;
+  document.getElementById("recv").innerText = me.received_count;
+  document.getElementById("meinfo").innerText = `${me.nickname} (${me.gender})`;
+  if(me.sent_count >= 2){
+    alert("시그널 2개를 모두 사용했어요!");
+    location.href="/lobby/";
+  }
+  return me;
+}
+
+async function loadList(){
+  const res = await fetch("/api/cards/");
+  const data = await res.json();
+  const cards = data.cards || [];
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  const oppLabel = (me.gender === "M") ? "여자 닉네임" : "남자 닉네임";
+  document.getElementById("sectionTitle").innerText = oppLabel;
+
+  if(cards.length === 0){
+    list.innerHTML = `<div class="muted">지금은 보여줄 닉네임이 없어요.</div>`;
+    return;
+  }
+
+  for(const c of cards){
+    const div = document.createElement("div");
+    div.className = "item" + (c.sent ? " sent" : "");
+    div.innerText = c.nickname;
+    if(c.sent){
+      const tag = document.createElement("div");
+      tag.className = "tag";
+      tag.innerText = "보냄";
+      div.appendChild(tag);
+    }
+    div.onclick = () => openModal(c);
+    list.appendChild(div);
+  }
+}
+
+async function sendSignal(toId){
+  const csrftoken = getCookie("csrftoken");
+  const res = await fetch("/api/signal/", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {"Content-Type":"application/json","X-CSRFToken": csrftoken},
+    body: JSON.stringify({to_id: toId})
+  });
+  const data = await res.json().catch(()=> ({}));
+  if(!res.ok){ alert(data.error || "전송 실패"); return false; }
+  return true;
+}
+
+async function boot(){
+  await refreshMe();
+
+  // 실시간(받은 호감, 매칭)
+  const wsProto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${wsProto}://${location.host}/ws/participant/${me.id}/`);
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if(data.type === "received_update"){
+      document.getElementById("recv").innerText = data.received_count;
+    }
+    if(data.type === "match_created"){
+      alert(`🎉 ${data.partner_nickname} 님과 매칭! /chat 에서 확인 가능`);
+    }
+  };
+
+  await loadList();
+
+  document.getElementById("btnCancel").onclick = closeModal;
+  document.getElementById("backdrop").onclick = (e) => {
+    if(e.target.id === "backdrop") closeModal();
+  };
+  document.getElementById("btnOk").onclick = async () => {
+    if(!selected) return;
+    const ok = await sendSignal(selected.id);
+    closeModal();
+    if(ok){
+      await refreshMe();
+      await loadList();
+    }
+  };
+}
+boot();
+</script>
+</body>
+</html>
