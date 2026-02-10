@@ -96,9 +96,9 @@ if os.environ.get("AUTO_CREATE_SUPERUSER") == "1":
 
         if not User.objects.filter(username="admin").exists():
             User.objects.create_superuser(
-                username="admin",
+                username="onelight",
                 email="admin@onelight.com",
-                password=os.environ.get("ADMIN_PASSWORD", "admin1234")
+                password=os.environ.get("ADMIN_PASSWORD", "onelight0212")
             )
     except Exception as e:
         print("Superuser auto-create failed:", e)
