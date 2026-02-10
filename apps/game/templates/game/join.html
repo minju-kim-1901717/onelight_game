@@ -8,13 +8,13 @@
     body{font-family:system-ui;margin:0;padding:24px;background:#0b0b0f;color:#fff}
     .card{max-width:460px;margin:0 auto;background:#141420;border-radius:16px;padding:18px}
     input,select,button{
-      width:100%;padding:14px;border-radius:12px;border:0;margin-top:10px;
-      font-size:16px;
+      width:96%;padding:14px;border-radius:50px;border:0;margin-top:10px;
+      font-size:16px; text-align:center;
     }
     input,select{background:#1f1f2c;color:#fff;appearance:none}
     select{cursor:pointer}
     button{background:#c714c7;color:#fff;font-weight:800;cursor:pointer}
-    button:disabled{opacity:.5;cursor:not-allowed}
+    button:disabled{opacity:.5;cursor:not-allowed; margin: auto; display: block}
     .hint{opacity:.7;font-size:12px;margin-top:10px;line-height:1.5}
     .row{display:flex;gap:10px}
     .row > *{flex:1}
@@ -22,9 +22,9 @@
 </head>
 <body>
   <div class="card">
-    <h2 style="margin:0 0 6px 0;">이벤트 입장</h2>
+    <h2 style="margin:0 0 6px 0; text-align: center">OneLight 입장</h2>
 
-    <input id="code" placeholder="이벤트 코드 (예: ONELIGHT)" autocomplete="off" />
+    <input id="code" placeholder="이벤트 코드" autocomplete="off" />
     <input id="nickname" placeholder="닉네임" maxlength="30" autocomplete="off" />
 
     <div class="row">
@@ -39,9 +39,8 @@
     <button id="btn">입장</button>
 
     <div class="hint">
-      • 사진 없이 닉네임만 사용합니다.<br/>
-      • 남자는 여자만, 여자는 남자만 보입니다.<br/>
-      • 같은 닉네임으로 다시 접속하려면 비밀번호가 필요해요.
+      • 화면애 있는 이벤트 코드를 입력해주새요<br/>
+      • 신청한 닉넥임과 같은 닉네임으로 설정해주새요
     </div>
   </div>
 
