@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -14,7 +14,7 @@
     .item{background:#141420;border-radius:14px;padding:14px 12px;cursor:pointer;display:flex;justify-content:center;align-items:center;font-weight:900;position:relative}
     .item.sent{opacity:.35; cursor:not-allowed;}
     .tag{position:absolute; right:10px; top:10px;font-size:11px;padding:4px 8px;border-radius:999px;background:#2a2a3a;}
-    .muted{opacity:.7;margin-top:10px;font-size:13px;line-height:1.4}
+    .muted{opacity:.7;margin-top:10px;font-size:13px;line-height:1.4;}
 
     .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px}
     .modal{width:100%;max-width:420px;background:#141420;border-radius:18px;padding:18px}
@@ -28,19 +28,22 @@
 <body>
   <div class="wrap">
     <div class="top">
-      <div class="pill">보낸 시그널: <span id="sent">0</span>/2</div>
-      <div class="pill">❤️ 받은 호감: <span id="recv">0</span></div>
+      <div class="pill">💙   보낸 시그널: <span id="sent">0</span>/2</div>
+      <div class="pill">❤️   받은 시그널: <span id="recv">0</span></div>
       <div class="pill" id="meinfo">...</div>
     </div>
-
+     <div class="muted">
+        • 닉네임을 누르면 시그널이 전송돼요 <br>
+        • 시그널은 두개까지만 보낼 수 있어요<br>
+        • 서로 매칭되면 매칭확인 칸에서 확인할 수 있어요
+    </div>
     <div class="sectionTitle" id="sectionTitle">상대 닉네임</div>
     <div id="list" class="list"></div>
-    <div class="muted">닉네임을 누르면 확인창이 뜨고, 확인하면 호감이 전송돼요.</div>
   </div>
 
   <div id="backdrop" class="backdrop">
     <div class="modal">
-      <h3>호감 보내기</h3>
+      <h3>시그널 보내기</h3>
       <div id="targetText" class="muted"></div>
       <div class="row">
         <button class="btn btn-cancel" id="btnCancel">취소</button>
@@ -64,7 +67,7 @@ let me = null;
 function openModal(card){
   if(card.sent){ alert("이미 보냄!"); return; }
   selected = card;
-  document.getElementById("targetText").innerText = `"${card.nickname}" 님에게 호감을 보낼까요?`;
+  document.getElementById("targetText").innerText = `"${card.nickname}" 님에게 시그널을 보낼까요?`;
   document.getElementById("backdrop").style.display = "flex";
 }
 function closeModal(){
@@ -78,7 +81,10 @@ async function refreshMe(){
   me = await res.json();
   document.getElementById("sent").innerText = me.sent_count;
   document.getElementById("recv").innerText = me.received_count;
-  document.getElementById("meinfo").innerText = `${me.nickname} (${me.gender})`;
+
+  // ✅ 닉네임 옆 성별 제외
+  document.getElementById("meinfo").innerText = `${me.nickname}`;
+
   if(me.sent_count >= 2){
     alert("시그널 2개를 모두 사용했어요!");
     location.href="/lobby/";
@@ -132,7 +138,7 @@ async function sendSignal(toId){
 async function boot(){
   await refreshMe();
 
-  // 실시간(받은 호감, 매칭)
+  // 실시간(받은 시그널, 매칭)
   const wsProto = location.protocol === "https:" ? "wss" : "ws";
   const ws = new WebSocket(`${wsProto}://${location.host}/ws/participant/${me.id}/`);
   ws.onmessage = (e) => {
@@ -141,7 +147,7 @@ async function boot(){
       document.getElementById("recv").innerText = data.received_count;
     }
     if(data.type === "match_created"){
-      alert(`🎉 ${data.partner_nickname} 님과 매칭! /chat 에서 확인 가능`);
+      alert(`🎉 ${data.partner_nickname} 님과 매칭! /match 에서 확인 가능`);
     }
   };
 
