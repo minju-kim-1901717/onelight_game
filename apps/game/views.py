@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.db import transaction, models
-from django.db.models import Count, F
+from django.db.models import Count, F, Exists, OuterRef
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
@@ -285,3 +285,30 @@ def send_message(request):
 
     # ✅ 실시간으로 “개수”만 올려주고 싶으면 여기서 WS를 추가해도 됨(원하면 붙여줄게)
     return Response({"ok": True}, status=201)
+
+
+@api_view(["GET"])
+def matches(request):
+    pid = request.session.get("participant_id")
+    if not pid:
+        return Response(status=401)
+
+    me = Participant.objects.select_related("event").get(id=pid)
+
+    # 내가 보낸(to_participant) 중, 상대가 나에게도 보낸(from_participant) 신호가 존재하면 "매칭"
+    reverse_exists = Signal.objects.filter(
+        event=me.event,
+        from_participant=OuterRef("to_participant_id"),
+        to_participant=me,
+    )
+
+    my_sent = Signal.objects.filter(event=me.event, from_participant=me).annotate(
+        is_matched=Exists(reverse_exists)
+    ).filter(is_matched=True)
+
+    partner_ids = list(my_sent.values_list("to_participant_id", flat=True))
+    partners = Participant.objects.filter(id__in=partner_ids).order_by("nickname")
+
+    return Response({
+        "matches": [{"id": p.id, "nickname": p.nickname} for p in partners]
+    })
