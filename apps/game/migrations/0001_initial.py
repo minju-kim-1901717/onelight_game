@@ -82,8 +82,5 @@ class Migration(migrations.Migration):
             model_name='signal',
             constraint=models.UniqueConstraint(fields=('event', 'from_participant', 'to_participant'), name='uniq_signal'),
         ),
-        migrations.AddConstraint(
-            model_name='signal',
-            constraint=models.CheckConstraint(condition=models.Q(('from_participant', models.F('to_participant')), _negated=True), name='no_self_signal'),
-        ),
+
     ]
