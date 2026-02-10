@@ -5,46 +5,157 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Join</title>
   <style>
-    body{font-family:system-ui;margin:0;padding:24px;background:#0b0b0f;color:#fff}
-    .card{max-width:460px;margin:0 auto;background:#141420;border-radius:16px;padding:18px}
-    input,select,button{
-      width:96%;padding:14px;border-radius:50px;border:0;margin-top:10px;
-      font-size:16px; text-align:center;
+    :root{
+      --bg:#0b0b0f;
+      --line:rgba(255,255,255,.08);
+      --muted:rgba(255,255,255,.72);
+      --pink:#c714c7;
+      --pink2:#ff6ad5;
+      --card1:rgba(255,255,255,.05);
+      --card2:rgba(255,255,255,.02);
+      --field:#1f1f2c;
     }
-    input,select{background:#1f1f2c;color:#fff;appearance:none}
-    select{cursor:pointer}
-    button{background:#c714c7;color:#fff;font-weight:800;cursor:pointer}
-    button:disabled{opacity:.5;cursor:not-allowed; margin: auto; display: block}
-    .hint{opacity:.7;font-size:12px;margin-top:10px;line-height:1.5}
-    .row{display:flex;gap:10px}
-    .row > *{flex:1}
+
+    *{ box-sizing:border-box; }
+
+    body{
+      font-family:system-ui;
+      margin:0;
+      padding:24px;
+      background:
+        radial-gradient(1100px 520px at 50% -10%, rgba(199,20,199,.18), rgba(11,11,15,1) 62%),
+        radial-gradient(900px 420px at 86% 8%, rgba(255,106,213,.10), rgba(11,11,15,0) 65%),
+        var(--bg);
+      color:#fff;
+      height:100vh;
+    }
+
+    .card{
+      max-width:460px;
+      margin:0 auto;
+      background:linear-gradient(180deg, var(--card1), var(--card2));
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:18px;
+      box-shadow:0 22px 60px rgba(0,0,0,.58), 0 0 44px rgba(199,20,199,.10);
+      position:relative;
+      overflow:hidden;
+    }
+    .card:before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background: radial-gradient(closest-side, rgba(199,20,199,.16), rgba(199,20,199,0) 70%);
+      transform: translate(40%, -30%);
+      filter: blur(18px);
+      pointer-events:none;
+    }
+
+    .title{
+      margin:0 0 10px 0;
+      text-align:center;
+      font-weight:1000;
+      letter-spacing:-.2px;
+      background: linear-gradient(120deg, var(--pink), var(--pink2), #fff, var(--pink2), var(--pink));
+      background-size: 420% 420%;
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      animation: gradMove 6s ease infinite;
+      text-shadow:0 0 18px rgba(199,20,199,.32), 0 0 34px rgba(199,20,199,.16);
+    }
+    @keyframes gradMove{
+      0%{background-position:0% 50%;}
+      50%{background-position:100% 50%;}
+      100%{background-position:0% 50%;}
+    }
+
+    .stack{ display:flex; flex-direction:column; gap:10px; }
+
+    input, select, button{
+      width:100%;
+      padding:14px 16px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      font-size:16px;
+      text-align:center;
+      outline:none;
+    }
+
+    input, select{
+      background:rgba(31,31,44,.92);
+      color:#fff;
+      appearance:none;
+      transition: border-color .2s ease, box-shadow .2s ease, filter .2s ease;
+    }
+    input:focus, select:focus{
+      border-color: rgba(199,20,199,.55);
+      box-shadow:0 0 0 4px rgba(199,20,199,.14), 0 0 22px rgba(199,20,199,.12);
+      filter: brightness(1.03);
+    }
+
+    select{ cursor:pointer; }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:stretch;
+    }
+    .row > *{ flex:1; }
+
+    button{
+      background:var(--pink);
+      color:#fff;
+      font-weight:1000;
+      cursor:pointer;
+      border-color: rgba(199,20,199,.35);
+      box-shadow: 0 14px 34px rgba(199,20,199,.24);
+      transition: transform .14s ease, filter .18s ease, box-shadow .2s ease, opacity .2s ease;
+    }
+    button:hover{ filter:brightness(1.06); box-shadow: 0 16px 38px rgba(199,20,199,.30); }
+    button:active{ transform:scale(.99); }
+    button:disabled{ opacity:.55; cursor:not-allowed; box-shadow:none; }
+
+    .hint{
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(16,16,26,.7);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.55;
+      text-align:center;
+      box-shadow: inset 0 0 0 1px rgba(199,20,199,.06);
+    }
   </style>
 </head>
+
 <body>
   <div class="card">
-    <h2 style="margin:0 0 6px 0; text-align: center">OneLight 입장</h2>
+    <h2 class="title">OneLight 입장</h2>
 
-    <input id="code" placeholder="이벤트 코드" autocomplete="off" />
-    <input id="nickname" placeholder="닉네임" maxlength="30" autocomplete="off" />
+    <div class="stack">
+      <input id="code" placeholder="이벤트 코드" autocomplete="off" />
+      <input id="nickname" placeholder="닉네임" maxlength="30" autocomplete="off" />
 
-    <div class="row">
-      <select id="gender">
-        <option value="">성별</option>
-        <option value="M">남</option>
-        <option value="F">여</option>
-      </select>
-      <input id="pin" placeholder="개인 비밀번호 (4~12자리)" autocomplete="off" />
+      <div class="row">
+        <select id="gender">
+          <option value="">성별</option>
+          <option value="M">남</option>
+          <option value="F">여</option>
+        </select>
+        <input id="pin" type="password" placeholder="개인 비밀번호 (4~12자리)" autocomplete="off" />
+      </div>
+
+      <button id="btn">입장</button>
     </div>
 
-    <button id="btn">입장</button>
-
     <div class="hint">
-      • 화면애 있는 이벤트 코드를 입력해주새요<br/>
-      • 신청한 닉넥임과 같은 닉네임으로 설정해주새요
+      • 화면에 있는 이벤트 코드를 입력해 주세요<br/>
+      • 신청한 닉네임과 동일하게 설정해 주세요
     </div>
   </div>
 
-  <!-- CSRF 토큰을 템플릿에서 한 번 사용해서 쿠키가 안정적으로 세팅되게 함 -->
   <form style="display:none;">{% csrf_token %}</form>
 
 <script>
@@ -52,6 +163,7 @@ function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
+  return "";
 }
 
 document.getElementById("btn").onclick = async () => {
@@ -65,7 +177,7 @@ document.getElementById("btn").onclick = async () => {
     return;
   }
 
-  const csrftoken = getCookie("csrftoken");
+  const csrftoken = getCookie("csrftoken"); // ✅ 여기 오타(x) 제거
 
   const res = await fetch("/api/join/", {
     method: "POST",
