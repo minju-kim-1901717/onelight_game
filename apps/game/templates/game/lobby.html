@@ -5,77 +5,207 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Lobby</title>
   <style>
-    body{font-family:system-ui;margin:0;padding:24px;background:#0b0b0f;color:#fff}
-    .wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
-    .card{background:#141420;border-radius:18px;padding:16px}
-    .title{font-weight:900;margin-bottom:6px}
+    :root{
+      --bg:#0b0b0f;
+      --line:rgba(255,255,255,.08);
+      --muted:rgba(255,255,255,.74);
+      --pink:#c714c7;
+      --pink2:#ff6ad5;
+      --white:#ffffff;
+      --card1:rgba(255,255,255,.05);
+      --card2:rgba(255,255,255,.02);
+    }
+
+    body{
+      font-family:system-ui;
+      margin:0;
+      padding:24px;
+      background:
+        radial-gradient(1100px 520px at 50% -10%, rgba(199,20,199,.18), rgba(11,11,15,1) 62%),
+        radial-gradient(900px 420px at 86% 8%, rgba(255,106,213,.10), rgba(11,11,15,0) 65%),
+        radial-gradient(900px 420px at 12% 18%, rgba(199,20,199,.10), rgba(11,11,15,0) 60%),
+        var(--bg);
+      color:#fff;
+        height:100vh;
+    }
+
+    .wrap{
+      max-width:560px;
+      margin:0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .card{
+      background:linear-gradient(180deg, var(--card1), var(--card2));
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:18px;
+      box-shadow:
+        0 22px 60px rgba(0,0,0,.58),
+        0 0 44px rgba(199,20,199,.10);
+      position:relative;
+      overflow:hidden;
+    }
+    .card:before{
+      content:"";
+      position:absolute;
+      inset:-40%;
+      background: radial-gradient(closest-side, rgba(199,20,199,.16), rgba(199,20,199,0) 70%);
+      transform: translate(40%, -30%);
+      filter: blur(18px);
+      pointer-events:none;
+    }
+
+    .brandRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+
+    .title{
+      font-weight:1000;
+      font-size:18px;
+      letter-spacing:-.2px;
+      background: linear-gradient(120deg, var(--pink), var(--pink2), var(--white), var(--pink2), var(--pink));
+      background-size: 420% 420%;
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      animation: gradMove 6s ease infinite;
+      text-shadow:0 0 18px rgba(199,20,199,.32), 0 0 34px rgba(199,20,199,.16);
+      margin:0;
+    }
+    @keyframes gradMove{
+      0%{background-position:0% 50%;}
+      50%{background-position:100% 50%;}
+      100%{background-position:0% 50%;}
+    }
+
+    .chip{
+      font-weight:1000;
+      font-size:12px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(31,31,44,.8);
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      opacity:.95;
+    }
+
     .nickname{
-      font-weight:900;
-      font-size:26px;
-      letter-spacing:-0.3px;
+      font-weight:1000;
+      font-size:28px;
+      letter-spacing:-0.4px;
       line-height:1.15;
       text-align:center;
+      margin:6px 0 2px 0;
 
-      /* 그라데이션 텍스트 */
       background: linear-gradient(135deg, #c714c7 0%, #ff6ad5 45%, #ffffff 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
 
-      /* 은은한 네온 글로우 */
       text-shadow:
         0 0 12px rgba(199, 20, 199, 0.35),
-        0 0 24px rgba(199, 20, 199, 0.15);
-
-      margin-top:6px;
+        0 0 26px rgba(199, 20, 199, 0.14);
     }
 
-    .muted{opacity:.7;font-size:13px;line-height:1.4; text-align:center}
-
-    .row{display:flex;gap:10px}
-    .btn{
-      width:100%;padding:14px;border-radius:14px;border:0;font-weight:900;
-      background:#2a2a3a;color:#fff;cursor:pointer
+    .muted{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+      text-align:center;
+      opacity:.95;
     }
-    .btnPrimary{background:#c714c7}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
 
-    /* ✅ pill 가운데 정렬 */
     .pillWrap{
-      margin-top:10px;
+      margin-top:12px;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      justify-content:center;   /* 가운데 정렬 */
+      justify-content:center;
       align-items:center;
       text-align:center;
     }
     .pill{
-      display:inline-block;
-      background:#1f1f2c;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      background:rgba(31,31,44,.88);
+      border:1px solid rgba(255,255,255,.06);
       border-radius:999px;
-      padding:8px 12px;
-      font-weight:900;
-      margin-top:8px
+      padding:10px 14px;
+      font-weight:1000;
+      box-shadow:0 10px 24px rgba(0,0,0,.25);
     }
-    .hidden{display:none}
+    .pill strong{ font-weight:1000; color:#fff; }
+    .hidden{ display:none; }
+
+    .row{ display:flex; gap:10px; }
+
+    .btn{
+      width:100%;
+      padding:14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.08);
+      font-weight:1000;
+      cursor:pointer;
+      background:#2a2a3a;
+      color:#fff;
+      transition: transform .14s ease, filter .18s ease, box-shadow .2s ease, opacity .2s ease;
+    }
+    .btn:active{ transform:scale(.99); }
+    .btn:hover{ filter:brightness(1.06); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; box-shadow:none; }
+
+    .btnPrimary{
+      background: var(--pink);
+      border-color: rgba(199,20,199,.35);
+      box-shadow: 0 14px 34px rgba(199,20,199,.24);
+    }
+    .btnPrimary:hover{ box-shadow: 0 16px 38px rgba(199,20,199,.30); }
+
+    .btnDanger{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.10);
+    }
+
+    .dividerNote{
+      margin-top:8px;
+      padding:12px 14px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(16,16,26,.7);
+      text-align:center;
+      box-shadow: inset 0 0 0 1px rgba(199,20,199,.06);
+    }
+
+    .tiny{
+      font-size:12px;
+      color:rgba(255,255,255,.62);
+      line-height:1.4;
+    }
   </style>
 </head>
+
 <body>
 <div class="wrap">
   <div class="card">
-    <div class="title">Onelight</div>
+    <div class="brandRow">
+      <h1 class="title">ONE LIGHT</h1>
 
-    <!-- ✅ 닉네임 표시 영역 (성별 제거) -->
+    </div>
+    <div class="muted">오늘의 연결, 지금 시작해요.</div>
     <div id="me" class="nickname">불러오는 중...</div>
 
-    <div class="pillWrap">
-      <div class="pill">❤️ 받은 시그널: <span id="recv">0</span></div>
-      <div class="pill">💙 보낸 시그널: <span id="sent">0</span>/2</div>
 
-      <!-- ✅ 메시지 기능 오픈 시에만 노출 -->
-      <div id="msgPill" class="pill hidden">
-        📩 받은 메시지: <span id="msgCount">0</span>개
-      </div>
+    <div class="pillWrap">
+      <div class="pill">❤️ 받은 시그널 <strong><span id="recv">0</span></strong></div>
+      <div class="pill">💙 보낸 시그널 <strong><span id="sent">0</span>/2</strong></div>
+
+      <div id="msgPill" class="pill hidden">📩 받은 메시지 <strong><span id="msgCount">0</span>개</strong></div>
     </div>
   </div>
 
@@ -87,18 +217,33 @@
   <!-- 2부 기능 버튼 -->
   <button id="featureBtn" class="btn" disabled>확인 중...</button>
 
-  <button class="btn" onclick="logout()">나가기</button>
-</div>
+  <button class="btn btnDanger" onclick="logout()">나가기</button>
 
-<div class="muted" style="margin-top:10px;">
-  * 진행 중 문제가 있으면 호스트에게 바로 말씀해주세요.
+  <div class="dividerNote">
+    <div class="tiny">* 진행 중 문제가 있으면 호스트에게 바로 말씀해주세요.</div>
+  </div>
 </div>
 
 <form style="display:none;">{% csrf_token %}</form>
 
 <script>
+/* ===== 공통: timeout fetch ===== */
+async function fetchWithTimeout(url, opts={}, ms=4000){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=> ctrl.abort(), ms);
+  try{ return await fetch(url, { ...opts, signal: ctrl.signal }); }
+  finally{ clearTimeout(t); }
+}
+
+/* ✅ 메시지 페이지와 동일한 잠금 키 */
+const CLIENT_LOCK_KEY = "onelight_message_locked";
+
+function isMessageLockedPersisted(){
+  return localStorage.getItem(CLIENT_LOCK_KEY) === "1";
+}
+
 async function loadMe(){
-  const res = await fetch("/api/me/");
+  const res = await fetchWithTimeout("/api/me/");
   if(!res.ok){ location.href="/"; return; }
   const d = await res.json();
 
@@ -108,7 +253,7 @@ async function loadMe(){
 }
 
 async function loadMessageCount(){
-  const res = await fetch("/api/message-count/");
+  const res = await fetchWithTimeout("/api/message-count/");
   if(res.ok){
     const d = await res.json();
     document.getElementById("msgCount").innerText = d.count ?? 0;
@@ -116,31 +261,64 @@ async function loadMessageCount(){
 }
 
 async function loadEventState(){
-  const res = await fetch("/api/event-state/");
+  const res = await fetchWithTimeout("/api/event-state/");
   if(!res.ok) return {message_open:false};
   return await res.json();
 }
 
+function setFeatureClosed(btn, msgPill){
+  btn.innerText = "2부에는 추가기능이 오픈됩니다";
+  btn.disabled = true;
+  btn.onclick = null;
+  msgPill.classList.add("hidden");
+}
+
+async function setFeatureExpired(btn, msgPill){
+  btn.innerText = "메세지 보내기 시간이 종료되었어요";
+  btn.disabled = true;
+  btn.onclick = null;
+
+  msgPill.classList.remove("hidden");
+  await loadMessageCount();
+}
+
+async function setFeatureOpen(btn, msgPill){
+  btn.innerText = "메세지 보내기";
+  btn.disabled = false;
+  btn.onclick = () => location.href="/message/";
+  msgPill.classList.remove("hidden");
+  await loadMessageCount();
+}
+
 async function setupFeatureButton(){
-  const state = await loadEventState();
   const btn = document.getElementById("featureBtn");
   const msgPill = document.getElementById("msgPill");
 
-  if(!state.message_open){
-    btn.innerText = "2부에는 추가기능이 오픈됩니다";
-    btn.disabled = true;
-    msgPill.classList.add("hidden");
-  } else {
-    btn.innerText = "메세지 보내기";
-    btn.disabled = false;
-    btn.onclick = () => location.href="/message/";
-    msgPill.classList.remove("hidden");
-    await loadMessageCount();
+  // ✅ 잠금이 1순위: 서버가 open이든 뭐든 "시간 종료"로 고정
+  if(isMessageLockedPersisted()){
+    setFeatureExpired(btn, msgPill);
+    return;
   }
+
+  const state = await loadEventState();
+
+  if(!state.message_open){
+    setFeatureClosed(btn, msgPill);
+    return;
+  }
+
+  // 서버가 message_locked를 주기 시작하면 즉시 반영
+  if(state.message_locked === true){
+    localStorage.setItem(CLIENT_LOCK_KEY, "1");
+    setFeatureExpired(btn, msgPill);
+    return;
+  }
+
+  await setFeatureOpen(btn, msgPill);
 }
 
 async function logout(){
-  await fetch("/api/logout/", {method:"POST", credentials:"same-origin"});
+  await fetchWithTimeout("/api/logout/", {method:"POST", credentials:"same-origin"}, 5000);
   location.href="/";
 }
 
@@ -148,8 +326,18 @@ async function boot(){
   await loadMe();
   await setupFeatureButton();
   setInterval(loadMe, 3000);
+
+  // ✅ 로비에서도 상태가 바뀔 수 있으니(2부 오픈/종료) 버튼 상태도 주기적으로 갱신
+  setInterval(setupFeatureButton, 4000);
 }
-boot();
+
+boot().catch((e)=>{
+  console.error(e);
+  const btn = document.getElementById("featureBtn");
+  btn.innerText = "새로고침";
+  btn.disabled = false;
+  btn.onclick = ()=> location.reload();
+});
 </script>
 </body>
 </html>
