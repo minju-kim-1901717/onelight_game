@@ -94,11 +94,22 @@ if os.environ.get("AUTO_CREATE_SUPERUSER") == "1":
         from django.contrib.auth import get_user_model
         User = get_user_model()
 
-        if not User.objects.filter(username="admin").exists():
-            User.objects.create_superuser(
-                username="onelight",
-                email="admin@onelight.com",
-                password=os.environ.get("ADMIN_PASSWORD", "onelight0212")
-            )
+        username = os.environ.get("ADMIN_USERNAME", "onelight")
+        password = os.environ.get("ADMIN_PASSWORD", "onelight0212")
+        email = os.environ.get("ADMIN_EMAIL", "admin@onelight.com")
+
+        user, created = User.objects.get_or_create(
+            username=username,
+            defaults={"email": email, "is_staff": True, "is_superuser": True},
+        )
+
+        # ✅ 이미 있든 없든 비번을 강제로 맞춰줌
+        user.is_staff = True
+        user.is_superuser = True
+        user.email = email
+        user.set_password(password)
+        user.save()
+
+        print(f"[AUTO_CREATE_SUPERUSER] ready: {username} created={created}")
     except Exception as e:
         print("Superuser auto-create failed:", e)
